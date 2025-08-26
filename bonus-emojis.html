@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>emoji-box</title>
+<style>
+  :root { --size: 64px; --gap: 12px; --radius: 16px; font-family: system-ui, Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif; }
+  body { margin: 0; background: #111; color: #eee; display: grid; place-items: center; min-height: 100vh; }
+  .wrap { width: min(900px, 96vw); padding: 20px; }
+  h1 { font-size: 18px; margin: 0 0 12px; opacity: .8; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--size), 1fr)); gap: var(--gap); }
+  button {
+    height: var(--size); width: var(--size); border-radius: var(--radius); border: 1px solid #2a2a2a;
+    background: #1b1b1b; color: #fff; font-size: 34px; cursor: pointer; transition: transform .05s ease, background .2s ease;
+  }
+  button:hover { background: #222; transform: translateY(-1px); }
+  .toast {
+    position: fixed; inset: auto 0 20px 0; margin: auto; width: fit-content; background: #1f2937;
+    color: #fff; padding: 10px 14px; border-radius: 999px; border: 1px solid #334155; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+    opacity: 0; transform: translateY(10px); transition: all .2s ease; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .bar { display:flex; gap:10px; margin: 0 0 14px; }
+  input[type="search"]{
+    flex:1; padding:10px 12px; border-radius:10px; border:1px solid #30363d; background:#0b0b0b; color:#e5e7eb; outline:none;
+  }
+  .hint { font-size: 12px; opacity: .6;}
+  body.max { --size: 96px; --radius: 18px; }
+</style>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="wrap">
+    <h1>emoji-box — click to copy</h1>
+    <div class="controls" style="display:flex; gap:8px; align-items:center; margin:0 0 10px;">
+  <button id="btnM"  title="Medium size">M</button>
+  <button id="btnMax" title="Max size">Mx</button>
+  <button id="btnFS" title="Fullscreen">⛶</button>
+    </div>
+    <div class="bar">
+      <input id="q" type="search" placeholder="Filter… (e.g., rocket, lock, 7)" />
+      <div class="hint">Tip: Ctrl/Cmd+F also works.</div>
+    </div>
+    <div id="grid" class="grid"></div>
+  </div>
+  <div id="toast" class="toast">Copied</div>
+
+<script>
+const emojis = [
+  // Your favourites
+  { e: "🔥", k: "fire hot" },
+  { e: "📝", k: "note memo" },
+  { e: "✨", k: "sparkles shine" },
+  { e: "🎨", k: "art palette" },
+  { e: "✅", k: "check tick green" },
+  { e: "🔒️", k: "lock secure" },
+  { e: "📌", k: "pin" },
+  { e: "🔧", k: "spanner wrench" },
+  { e: "🔨", k: "hammer" },
+  { e: "🌐", k: "globe web world" },
+  { e: "💡", k: "lightbulb idea" },
+  { e: "🏷️", k: "label tag" },
+  { e: "⚡️", k: "lightning zap" },
+  { e: "🐛", k: "bug error" },
+  { e: "🚑️", k: "ambulance emergency" },
+  { e: "🎉", k: "party celebration" },
+  { e: "🔐", k: "lock with key secure" },
+  { e: "🔖", k: "bookmark" },
+  { e: "🚨", k: "police light alert" },
+  { e: "🚧", k: "construction barrier" },
+  { e: "💚", k: "green heart" },
+  { e: "⬇️", k: "down arrow" },
+  { e: "⬆️", k: "up arrow" },
+  { e: "👷", k: "construction worker" },
+  { e: "📈", k: "chart up growth" },
+  { e: "♻️", k: "recycle" },
+  { e: "➕", k: "plus add" },
+  { e: "➖", k: "minus subtract" },
+  { e: "✏️", k: "pencil edit" },
+  { e: "💩", k: "poop" },
+  { e: "⏪️", k: "rewind back" },
+  { e: "🔀", k: "shuffle" },
+  { e: "📦️", k: "package box" },
+  { e: "👽️", k: "alien" },
+  { e: "🚚", k: "delivery truck" },
+  { e: "📄", k: "document page" },
+  { e: "💥", k: "explosion boom" },
+  { e: "🍱", k: "bento box food" },
+  { e: "♿️", k: "wheelchair accessible" },
+  { e: "🍻", k: "cheers beer" },
+  { e: "💬", k: "speech bubble chat" },
+  { e: "🗃️", k: "card file box" },
+  { e: "🔊", k: "speaker loud" },
+  { e: "🔇", k: "muted speaker" },
+  { e: "👥", k: "group people" },
+  { e: "🚸", k: "children crossing" },
+  { e: "🏗️", k: "building construction" },
+  { e: "📱", k: "mobile phone" },
+  { e: "🤡", k: "clown" },
+  { e: "🥚", k: "egg" },
+  { e: "🙈", k: "see no evil monkey" },
+  { e: "📸", k: "camera flash" },
+  { e: "⚗️", k: "alembic lab" },
+  { e: "🔍️", k: "magnifying glass search" },
+  { e: "🌱", k: "seedling" },
+  { e: "🚩", k: "triangular flag" },
+  { e: "🥅", k: "goal net" },
+  { e: "💫", k: "dizzy spark" },
+  { e: "🗑️", k: "wastebasket" },
+  { e: "🛂", k: "passport control" },
+  { e: "🩹", k: "adhesive bandage" },
+  { e: "🧐", k: "monocle face" },
+  { e: "⚰️", k: "coffin" },
+  { e: "🧪", k: "test tube lab" },
+  { e: "👔", k: "necktie business" },
+  { e: "🩺", k: "stethoscope" },
+  { e: "🧱", k: "brick" },
+  { e: "🧑‍💻", k: "coder developer" },
+  { e: "💸", k: "money with wings" },
+  { e: "🧵", k: "thread spool" },
+  { e: "🦺", k: "safety vest" },
+  { e: "✈️", k: "airplane flight" },
+  { e: "🧭", k: "compass" },
+  { e: "🧩", k: "puzzle piece" },
+  { e: "🧳", k: "luggage suitcase" },
+  { e: "🪙", k: "coin" },
+  { e: "🪂", k: "parachute" },
+  { e: "🪐", k: "ringed planet" },
+  { e: "🪴", k: "potted plant" },
+  { e: "🪲", k: "beetle insect" },
+  { e: "🪳", k: "cockroach" },
+  { e: "🪞", k: "mirror" },
+  { e: "🪟", k: "window" },
+  { e: "🪠", k: "plunger" },
+  { e: "🪤", k: "mouse trap" },
+  { e: "🪨", k: "rock stone" },
+  { e: "🪩", k: "mirror ball disco" },
+  { e: "🪫", k: "low battery" },
+  { e: "🪧", k: "placard sign" },
+  { e: "🧠", k: "brain thinking strategy" },
+  { e: "🧰", k: "toolbox tools kit" },
+{ e: "🧹", k: "broom cleanup tidy" },
+{ e: "🔬", k: "microscope inspect analysis" },
+{ e: "🛰️", k: "satellite deploy remote" },
+{ e: "☁️", k: "cloud services hosting" },
+{ e: "🗄️", k: "file cabinet archive" },
+{ e: "💾", k: "floppy save backup" },
+{ e: "🔗", k: "link url chain" },
+{ e: "⏳", k: "hourglass waiting pending" },
+{ e: "⏱️", k: "stopwatch timing performance" },
+{ e: "📋", k: "clipboard copy paste" },
+{ e: "🛡️", k: "shield protect security" },
+{ e: "🧯", k: "fire extinguisher hotfix" },
+{ e: "🧲", k: "magnet attract capture" },
+{ e: "📉", k: "chart down decline" },
+{ e: "🧑‍🚀", k: "astronaut launch mission" },
+{ e: "🧬", k: "dna genetics sequence" },
+// Common emojis
+  { e: "😀", k: "grinning smile" }, { e: "😂", k: "joy laugh" }, { e: "😍", k: "heart eyes love" },
+  { e: "😎", k: "cool sunglasses" }, { e: "😢", k: "cry sad" }, { e: "😡", k: "angry mad" },
+  { e: "👍", k: "thumbs up like" }, { e: "👎", k: "thumbs down dislike" }, { e: "🙏", k: "pray thanks" },
+  { e: "🎉", k: "party celebration" }, { e: "💔", k: "broken heart sad" }, { e: "💯", k: "hundred points" },
+  { e: "🔥", k: "fire hot trending" }, { e: "✨", k: "sparkles shine magic" }, { e: "🌟", k: "star glowing" },
+  { e: "🌈", k: "rainbow colorful" }, { e: "🌍", k: "earth globe world" }, { e: "🌞", k: "sunshine bright" },
+  { e: "🌜", k: "moon night sky" }, { e: "⭐️", k: "star rating favorite" }, { e: "💡", k: "lightbulb idea" },
+  { e: "💬", k: "speech bubble chat" }, { e: "📅", k: "calendar date schedule" }, { e: "📸", k: "camera photo" },
+  { e: "🎨", k: "art palette creativity" }, { e: "🎵", k: "music note sound" }, { e: "🎤", k: "microphone sing" },
+  { e: "🎧", k: "headphones listen" }, { e: "🎬", k: "clapperboard film movie" }, { e: "🎮", k: "video game play" },
+  { e: "🏆", k: "trophy award win" }, { e: "🏅", k: "medal achievement sport" }, { e: "🚀", k: "rocket launch space" },
+  { e: "🚗", k: "car vehicle drive" }, { e: "🚲", k: "bicycle ride cycle" }, { e: "✈️", k: "airplane flight travel" },
+  { e: "⏰", k: "alarm clock time" }, { e: "🔒️", k: "lock secure privacy" }, { e: "🔑", k: "key access unlock" },
+  { e: "💳", k: "credit card payment buy" }, { e: "💰", k: "money cash wealth rich" },
+
+
+
+  // Blue “number button” keycaps 1–10 (appearance varies by OS, usually blue)
+  { e: "1️⃣", k: "1 one" }, { e: "2️⃣", k: "2 two" }, { e: "3️⃣", k: "3 three" },
+  { e: "4️⃣", k: "4 four" }, { e: "5️⃣", k: "5 five" }, { e: "6️⃣", k: "6 six" },
+  { e: "7️⃣", k: "7 seven" }, { e: "8️⃣", k: "8 eight" }, { e: "9️⃣", k: "9 nine" },
+  { e: "🔟", k: "10 ten" },  
+];
+
+const grid = document.getElementById("grid");
+const toast = document.getElementById("toast");
+const q = document.getElementById("q");
+
+function render(filter="") {
+  grid.innerHTML = "";
+  const f = filter.trim().toLowerCase();
+  emojis
+    .filter(x => !f || x.e.includes(f) || x.k.includes(f))
+    .forEach(({e,k}) => {
+      const b = document.createElement("button");
+      b.textContent = e;
+      b.title = k || "";
+      b.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(e);
+          showToast(`Copied ${e}`);
+        } catch {
+          // Fallback if clipboard blocked
+          const t = document.createElement("textarea");
+          t.value = e; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove();
+          showToast(`Copied ${e}`);
+        }
+      });
+      grid.appendChild(b);
+    });
+}
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(showToast.t); showToast.t = setTimeout(()=>toast.classList.remove("show"), 900);
+}
+q.addEventListener("input", e => render(e.target.value));
+render();
+
+// ---- Preferences: size + last search ----
+const SIZE_KEY = "emojiBox.sizeMode";
+const SEARCH_KEY = "emojiBox.search";
+
+function applySize(mode){
+  document.body.classList.toggle("max", mode === "Max");
+  localStorage.setItem(SIZE_KEY, mode);
+}
+
+// Restore on load
+applySize(localStorage.getItem(SIZE_KEY) || "M");
+q.value = localStorage.getItem(SEARCH_KEY) || "";
+render(q.value);
+
+// Events
+document.getElementById("btnM").onclick = () => applySize("M");
+document.getElementById("btnMax").onclick = () => applySize("Max");
+
+document.getElementById("btnFS").onclick = async () => {
+  if (!document.fullscreenElement) {
+    try { await document.documentElement.requestFullscreen(); } catch {}
+  } else {
+    document.exitFullscreen?.();
+  }
+};
+
+q.addEventListener("input", e => localStorage.setItem(SEARCH_KEY, e.target.value));
+
+</script>
+</body>
+</html>
