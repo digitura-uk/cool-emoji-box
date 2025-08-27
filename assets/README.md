@@ -8,10 +8,10 @@ Use them in the main README to show how the app looks in action.
 ## Preview
 
 ### Main Interface
-![Emoji Box UI](./emoji-box-main.png)
+![Emoji Box UI](./emoji-box-1.png)
 
 ### One-Click Copy
-![Emoji Copy Feature](./emoji-copy.png)
+![Emoji Copy Feature](./emoji-2.png)
 
 ---
 
