@@ -18,4 +18,5 @@ Use them in the main README to show how the app looks in action.
 📌 Tip: To display these in your main README, use relative paths like:
 
 ```md
-![Emoji Box UI](assets/emoji-box-main.png)
+![Emoji Box UI](assets/emoji-box-1.png)
+![Emoji Box UI](assets/emoji-box-2.png)
