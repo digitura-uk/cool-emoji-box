@@ -11,7 +11,7 @@ Use them in the main README to show how the app looks in action.
 ![Emoji Box UI](./emoji-box-1.png)
 
 ### One-Click Copy
-![Emoji Copy Feature](./emoji-2.png)
+![Emoji Copy Feature](./emoji-box-2.png)
 
 ---
 
